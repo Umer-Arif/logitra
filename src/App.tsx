@@ -15,9 +15,12 @@ function App() {
               Your document engine
             </p>
           </div>
-          <h2 className="text-2xl text-blue-400 text-center p-10 rounded-2xl border border-blue-400 w-fit mx-auto">
-            Drag or drop
-          </h2>
+          <div className="flex justify-center">
+            <button className="text-2xl text-blue-400 p-10 rounded-2xl border border-blue-400 hover:border-purple-400 hover:scale-105 hover:shadow-xl hover:shadow-blue-400/30 transition-all">
+              Drag or drop
+            </button>
+          </div>
+          <div></div>
         </section>
       </div>
     </>
