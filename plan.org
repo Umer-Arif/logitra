@@ -1,0 +1,86 @@
+* Logitra — RAG Document Engine Plan
+
+** Current State (what you built so far)
+   - React + Tailwind frontend (src/App.tsx)
+   - Sidebar collapse toggle using useState
+   - Hidden <input type="file"> connected via useRef
+   - Button onClick triggers file picker via inputRef.current?.click()
+   - File stored in 'upload' state via setUpload in onChange
+   - console.log to verify file object
+
+** Phase 0: Frontend Polish (before moving to backend)
+   * [ ] Add upload status: idle / uploading / done / failed
+   * [ ] Add progress percentage state
+   * [ ] Show status text under the button
+   * [ ] (Optional) simple progress bar with Tailwind
+   This simulates the full lifecycle so the UI is ready for real backend.
+
+** Phase 1: FastAPI Backend (Python)
+   - [ ] Create backend/ folder
+   - [ ] pip install fastapi uvicorn python-multipart
+   - [ ] main.py: POST /upload endpoint
+         - Accept uploaded file
+         - Save to uploads/ folder
+         - Return {"status": "ok", "filename": "..."}
+   - [ ] Run with: uvicorn main:app --reload
+   - [ ] Test with curl or httpie
+
+** Phase 2: Frontend sends file to real backend
+   - [ ] In onChange or after file selection:
+         - POST file to http://localhost:8000/upload
+         - Use fetch() with FormData
+         - Track status (uploading / done / failed)
+         - Track upload progress via XMLHttpRequest or fetch (if using XHR)
+   - [ ] Show server response in UI
+
+** Phase 3: Document Parsing (backend)
+   - [ ] pip install PyPDF2 python-docx (or unstructured)
+   - [ ] Parse PDF → extract text
+   - [ ] Parse DOCX → extract text
+   - [ ] Return extracted text (or store it)
+
+** Phase 4: Chunking + Embeddings + Vector Store
+   - [ ] pip install chromadb sentence-transformers
+   - [ ] Split extracted text into chunks (~500 chars each, 100 overlap)
+   - [ ] Load small embedding model: all-MiniLM-L6-v2 (runs on CPU)
+   - [ ] Store chunks + embeddings in ChromaDB collection
+   - [ ] This is the "indexing" step — happens after file upload
+
+** Phase 5: Query Endpoint (RAG)
+   - [ ] POST /query endpoint on FastAPI
+         - Accept: {"question": "..."}
+         - Convert question to embedding
+         - Search ChromaDB for top-k similar chunks
+         - Build prompt: "Context: <chunks>\nQuestion: <question>\nAnswer:"
+         - Send to OpenRouter free tier API (POST request)
+         - Return: {"answer": "...", "sources": [...]}
+
+** Phase 6: Frontend Query UI
+   - [ ] Add text input + "Ask" button below upload area
+   - [ ] Send question to /query endpoint
+   - [ ] Show answer + relevant document names in UI
+
+** Phase 7: Portfolio polish
+   - [ ] Error handling (no file selected, bad file, API timeout)
+   - [ ] README explaining the architecture
+   - [ ] Show design decision: OpenRouter (swappable to Ollama/Local)
+   - [ ] Deploy backend on render.com / railway.app (free tier)
+   - [ ] (Optional) Deploy frontend on Vercel
+
+** Tools & Libraries Reference
+   | Purpose          | Library                          |
+   |------------------+---------------------------------|
+   | Backend server   | FastAPI + uvicorn               |
+   | File parsing     | PyPDF2, python-docx             |
+   | Embeddings       | sentence-transformers           |
+   | Vector DB        | ChromaDB (persistent)           |
+   | LLM access       | OpenRouter free tier (REST API) |
+   | HTTP requests    | requests (Python)               |
+   | CORS             | fastapi.middleware.cors         |
+
+** Notes
+   - OpenRouter free tier: sign up at openrouter.ai, get API key
+   - sentence-transformers models run on CPU — no GPU needed
+   - ChromaDB is persistent by default — data survives restarts
+   - Keep .env for API keys (never commit)
+   - FastAPI automatically generates /docs (Swagger UI) for testing
