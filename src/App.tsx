@@ -2,7 +2,10 @@ import { useRef, useState } from "react";
 
 function App(): JSX.Element {
   const [collapsed, setCollapsed] = useState(false);
-  const [upload, setUpload] = useState<File | null>(null);
+  const [uploadStatus, setUploadStatus] = useState<
+    "idle" | "uploading" | "done" | "failed"
+  >("idle");
+  const [progress, setProgress] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
 
   return (
@@ -22,9 +25,31 @@ function App(): JSX.Element {
               Your document engine
             </p>
           </div>
-          <div className="flex justify-center">
+          <div className="flex flex-col items-center justify-center">
             <input
-              onChange={(e) => { setUpload(e.target.files[0]); console.log(e.target.files[0]); }}
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (!file) return;
+                setUploadStatus("uploading");
+                setProgress(0);
+                const formData = new FormData();
+                formData.append("file", file);
+                fetch("http://localhost:8000/upload", {
+                  method: "POST",
+                  body: formData,
+                })
+                  .then((response) => {
+                    if (!response.ok) throw new Error("Upload failed");
+                    return response.json();
+                  })
+                  .then(() => {
+                    setUploadStatus("done");
+                    setProgress(100);
+                  })
+                  .catch(() => {
+                    setUploadStatus("failed");
+                  });
+              }}
               ref={inputRef}
               type="file"
               hidden
@@ -34,8 +59,32 @@ function App(): JSX.Element {
               className="text-2xl text-blue-400 p-10 rounded-2xl border border-blue-400 hover:border-purple-400 hover:scale-105 hover:shadow-xl hover:shadow-blue-400/30 transition-all"
               onClick={() => inputRef.current?.click()}
             >
-              Drag or drop
+              {uploadStatus === "uploading" ? "Uploading..." : "Drag or drop"}
             </button>
+            <div className=" flex text-center mt-4 text-white">
+              {uploadStatus === "idle" && (
+                <span className="text-gray-400">No file selected</span>
+              )}
+              {uploadStatus === "uploading" && (
+                <div>
+                  <span className="text-yellow-400">
+                    Uploading... {progress}%
+                  </span>
+                  <div className="w-64 mx-auto mt-2 h-2 bg-gray-600 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-blue-500 transition-all duration-300"
+                      style={{ width: `${progress}%` }}
+                    />
+                  </div>
+                </div>
+              )}
+              {uploadStatus === "done" && (
+                <span className="text-green-400">Upload complete!</span>
+              )}
+              {uploadStatus === "failed" && (
+                <span className="text-red-400">Upload failed</span>
+              )}
+            </div>
           </div>
         </section>
       </main>

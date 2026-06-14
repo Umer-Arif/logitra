@@ -5,33 +5,33 @@
    - Sidebar collapse toggle using useState
    - Hidden <input type="file"> connected via useRef
    - Button onClick triggers file picker via inputRef.current?.click()
-   - File stored in 'upload' state via setUpload in onChange
-   - console.log to verify file object
+   - Frontend POSTs to backend with success/failure handling
+   - Backend upload endpoint tested and working
 
-** Phase 0: Frontend Polish (before moving to backend)
-   * [ ] Add upload status: idle / uploading / done / failed
-   * [ ] Add progress percentage state
-   * [ ] Show status text under the button
-   * [ ] (Optional) simple progress bar with Tailwind
+** TODO Phase 0: Frontend Polish (before moving to backend) [4/4]
+   * [X] Add upload status: idle / uploading / done / failed
+   * [X] Add progress percentage state
+   * [X] Show status text under the button
+   * [X] (Optional) simple progress bar with Tailwind
    This simulates the full lifecycle so the UI is ready for real backend.
 
-** Phase 1: FastAPI Backend (Python)
-   - [ ] Create backend/ folder
-   - [ ] pip install fastapi uvicorn python-multipart
-   - [ ] main.py: POST /upload endpoint
-         - Accept uploaded file
-         - Save to uploads/ folder
-         - Return {"status": "ok", "filename": "..."}
-   - [ ] Run with: uvicorn main:app --reload
-   - [ ] Test with curl or httpie
+** Phase 1: FastAPI Backend (Python) [5/5]
+   - [X] Create backend/ folder
+   - [X] pip install fastapi uvicorn python-multipart
+   - [X] main.py: POST /upload endpoint
+     - Accept uploaded file
+     - Save to uploads/ folder
+     - Return {"status": "ok", "filename": "..."}
+   - [X] Run with: uvicorn main:app --reload
+   - [X] Test with curl or httpie
 
 ** Phase 2: Frontend sends file to real backend
-   - [ ] In onChange or after file selection:
+   - [X] In onChange or after file selection:
          - POST file to http://localhost:8000/upload
          - Use fetch() with FormData
          - Track status (uploading / done / failed)
          - Track upload progress via XMLHttpRequest or fetch (if using XHR)
-   - [ ] Show server response in UI
+   - [X] Show server response in UI
 
 ** Phase 3: Document Parsing (backend)
    - [ ] pip install PyPDF2 python-docx (or unstructured)

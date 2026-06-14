@@ -1,0 +1,121 @@
+* Phase 0: Frontend Polish — Implementation Plan
+  :PROPERTIES:
+  :STARTED: 2026-05-14
+  :END:
+
+** Overview
+   - Goal: Add upload lifecycle UI (idle → uploading → done/failed) with simulation
+   - No backend yet — all state is local, progress is simulated with timers
+   - Prepares the UI to plug into a real /upload endpoint in Phase 2
+
+** Files affected
+   Only =src/App.tsx= — no new files, no backend code.
+
+** 0.1 — State variables
+    Add two new =useState= hooks alongside existing state:
+
+    - =status = "...": UploadStatus= — tracks which phase the upload lifecycle is in.
+      Type should be a union of literal string types: ="idle" | "uploading" | "done" | "failed"=
+      Default value: ="idle"=
+
+    - =progress = 0: number= — an integer 0–100 used for the progress bar.
+
+** 0.2 — Derived filename helper
+    Derive a display name from the =upload= file object using optional chaining
+    and the file's =.name= property, falling back to an empty string.
+
+    Declare it as a =const= right after the state hooks.
+
+** 0.3 — Simulated upload in =onChange=
+    Replace the current one-liner =onChange= with a handler (name it
+    =handleFileSelect=) that kicks off a simulated upload via =setInterval=.
+
+    Flow:
+    1. Guard: if no file selected (=e.target.files?.[0]= is falsy), return early.
+    2. Store the file in =setUpload()=.
+    3. Reset =progress= to 0 and set =status= to ="uploading"=.
+    4. Start a =setInterval= (every ~150ms) that updates =progress=:
+       - Use the functional updater form of =setProgress= so you read the
+         latest value.
+       - Add a random increment (e.g. 3–10) to the previous value.
+       - If the new value >= 100, clamp to 100, clear the interval, and flip
+         a coin (=Math.random() < 0.2=) to set =status= to either ="failed"=
+         (20 %) or ="done"= (80 %).
+    5. Store the interval ID so it can be cleared.
+
+    *Why random increments:* Feels more realistic than a fixed value.
+    *Why 150 ms:* Fast enough to not be boring, slow enough to see bar animate.
+
+** 0.4 — Clear / reset handler
+    A handler (name it =handleClear=) that lets the user start over after the
+    upload finishes or fails.
+
+    It should:
+    - Clear the =upload= state (=null=).
+    - Reset =status= to ="idle"=.
+    - Reset =progress= to 0.
+    - Reset =inputRef.current.value= to =""= (necessary so the same file can
+      be re-selected — otherwise =onChange= won't fire for an identical file).
+
+** 0.5 — Status text
+    Render a status message below the upload button based on =status=.
+
+    | status     | Text                               |
+    |------------+------------------------------------|
+    | idle       | "Upload a document" (dim grey)     |
+    | uploading  | "Uploading… {progress}%" (blue)    |
+    | done       | "Uploaded: {fileName}" (green)     |
+    | failed     | "Upload failed. Try again." (red)  |
+
+    Conditionally render a =<p>= element with the appropriate Tailwind text
+    colour class based on =status=.
+
+** 0.6 — Progress bar (Tailwind)
+    Show only during ="uploading"= status.
+
+    Structure:
+    - Outer =<div>=: fixed width (e.g. =w-64=), small height (=h-3=), dark grey
+      background (=bg-gray-700=), fully rounded (=rounded-full=), overflow hidden.
+    - Inner =<div>=: full height, blue background (=bg-blue-500=), rounded,
+      with =transition-all duration-200= for smooth animation, and an inline
+      style of =width: ${progress}%=.
+
+** 0.7 — Clear / reset button
+    Show after upload finishes (="done"= or ="failed"=).
+
+    A small =<button>= with underline style and grey text that turns white on
+    hover. Clicking it calls =handleClear=.
+
+** 0.8 — Wire everything in JSX
+    Wrap the =<input>=, =<button>=, status text, progress bar, and clear button
+    in a container =<div>= with flex column layout and a gap.
+
+    - The =<input>= should call =handleFileSelect= on change.
+    - The =<button>= should be =disabled= when =status === "uploading"=, and
+      have =disabled:opacity-50 disabled:cursor-not-allowed= classes.
+    - The status text section is a conditional rendering chain based on =status=.
+    - The progress bar renders only during ="uploading"=.
+    - The clear button renders only when =status= is ="done"= or ="failed"=.
+
+** 0.9 — Testing the simulation
+    After writing the code:
+
+    1. Start the dev server (=npm run dev= or =pnpm dev=).
+    2. Click "Drag or drop" → pick a file.
+    3. Watch the progress bar fill up and the status text update.
+    4. If the result is "Upload failed" — hit "Upload another file" and try
+       again (keep going until you see a green "Uploaded:" at least once).
+    5. Verify the button is disabled while uploading.
+    6. After "Uploaded:", verify "Upload another file" resets everything and
+       lets you pick again.
+
+** 0.10 — Commit
+    Stage =src/App.tsx= and commit with an appropriate =feat:= message.
+
+** Summary of changes to =src/App.tsx=
+    - New imports: none needed (=useRef=, =useState= already imported)
+    - New state: =status=, =progress=
+    - New functions: =handleFileSelect=, =handleClear=
+    - Updated JSX: status text, progress bar, clear button, disable logic
+    - Total added: ~60 lines
+    - Total removed: ~2 lines (old inline =onChange= and =console.log=)
